@@ -1,0 +1,54 @@
+/**
+ * @fileoverview Global styles for Email Radar application
+ * @description Tailwind CSS imports and base glassomorphic styling
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100;
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer components {
+  /* Glassomorphic surface styles */
+  .glass-surface {
+    @apply bg-white/60 dark:bg-slate-800/60;
+    @apply backdrop-blur-md;
+    @apply border border-slate-400/20;
+    @apply shadow-glass;
+  }
+  
+  /* Button styles */
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600;
+    @apply text-white font-semibold;
+    @apply px-4 py-2 rounded-lg;
+    @apply transition-all duration-200;
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .btn-secondary {
+    @apply glass-surface hover:bg-white/80 dark:hover:bg-slate-700/80;
+    @apply text-slate-700 dark:text-slate-200;
+    @apply px-4 py-2 rounded-lg;
+    @apply transition-all duration-200;
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+@layer utilities {
+  /* Focus styles for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply focus:ring-offset-white dark:focus:ring-offset-slate-900;
+  }
+} 
