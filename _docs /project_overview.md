@@ -7,18 +7,19 @@ Email Radar is a Grammarly‑style assistant focused on email. The goal is to 
 
 Google OAuth sign‑in and inbox listing
 Select a draft or existing message.
-Real‑time grammar & spell checking via LanguageTool
-Inline accept / reject of fixes
+Real‑time grammar & spell checking via custom nspell engine
+Inline accept / reject of fixes with categorized suggestions
 Save an updated draft back to Gmail
 
 ## Phase 1 – Baseline Assistant
 
 Gmail OAuth (read, compose, send scopes).
+Rich text email editor with TipTap.
 Inbox list with basic filters (unread, drafts).
-HTML‑to‑plaintext parsing.
-LanguageTool grammar check with inline diff UI.
+Custom nspell grammar engine with visual suggestion underlines.
+Categorized suggestions (Correctness, Clarity, Engagement, Delivery).
 Apply fixes and push corrected draft to Gmail.
-Settings page (toggle suggestion aggressiveness, language).
+Settings page (toggle suggestion categories, preferences).
 
 ## Phase 2 – AI Enhancement
 

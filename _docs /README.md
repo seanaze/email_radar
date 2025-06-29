@@ -9,7 +9,7 @@ Email Radar is a next-generation, AI-first assistant for email composition. It i
 
 ## Core Features
 - Google OAuth sign-in and inbox listing
-- Real-time grammar & spell checking (LanguageTool)
+- Real-time grammar & spell checking (custom nspell engine)
 - Inline accept/reject of fixes with diff UI
 - Save updated drafts back to Gmail
 - Context-aware rewrites powered by LLM (AI)

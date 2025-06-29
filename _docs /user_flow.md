@@ -4,9 +4,9 @@
 ## 1. User Authentication
 1. User visits the Email Radar web app.
 2. Landing page displays a brief overview of the product and a prominent "Sign in with Google" button.
-2. User clicks "Sign in with Google".
-3. App requests Gmail OAuth permissions (read, compose, send).
-4. Upon successful authentication, user is redirected to the inbox view.
+3. User clicks "Sign in with Google".
+4. App requests Gmail OAuth permissions (read, compose, send).
+5. Upon successful authentication, user is redirected to the inbox view.
 
 ## 2. Registration & Authentication
 1. User clicks "Sign in with Google".
@@ -30,38 +30,51 @@
 3. User selects a draft or an existing message to edit.
 4. If the user tries to access the inbox without authentication, they are redirected to the landing page.
 
-## 5. Email Editing & Assistance
-1. The selected email is parsed (HTML-to-plaintext if needed).
-2. Real-time grammar and spell checking is performed via LanguageTool.
-3. Inline suggestions are displayed (diff UI):
-   - User can accept or reject each fix inline.
-4. User can apply all accepted fixes to the draft.
-5. If the user navigates away with unsaved changes, a confirmation prompt is shown.
+## 5. Rich Text Email Editing & Real-Time Assistance
+1. The selected email opens in a TipTap rich text editor with formatting toolbar.
+2. Real-time grammar and spell checking is performed using custom nspell-based engine.
+3. Visual suggestion underlines appear as user types:
+   - **Correctness** (red wavy): Spelling, capitalization, punctuation errors
+   - **Clarity** (blue solid): Conciseness and clarity improvements  
+   - **Engagement** (green solid): Vivid, compelling language suggestions
+   - **Delivery** (purple solid): Tone, flow, and readability enhancements
+4. Suggestion sidebar displays categorized suggestions with accept/reject controls.
+5. User can click suggestions to highlight corresponding text in editor.
+6. Auto-save functionality saves changes every 1 second while editing.
+7. Writing score is calculated and displayed in real-time.
 
-## 6. AI-Powered Features (Phase 2)
-1. User can request context-aware rewrites (powered by LLM).
-2. Personalized style recommendations are shown based on user goals.
-3. User can search past emails and corrections semantically.
-4. Smart templates and auto-completion are available for quick replies.
+## 6. Suggestion Management & AI Features
+1. User can accept individual suggestions with immediate text replacement.
+2. User can dismiss suggestions to remove them from the sidebar.
+3. AI-powered context-aware rewrites are available on-demand:
+   - Tone adjustment (formal, casual, persuasive)
+   - Clarity improvements (concise, clear writing)
+   - Engagement enhancements (vivid, compelling language)
+4. Suggestion highlighting shows exactly what text will be changed.
+5. User can undo accepted suggestions if needed.
 
-## 7. Saving, Sending & Redirects
-1. User saves the updated draft back to Gmail.
+## 7. Saving, Sending & Feedback
+1. User saves the updated draft back to Gmail (manual save or auto-save).
 2. Optionally, user can send the corrected email directly from the app.
-3. After saving or sending, user is redirected back to the inbox with a success notification.
-4. If saving or sending fails, an error message is displayed with options to retry or return to editing.
+3. Success notifications confirm save/send actions.
+4. If saving or sending fails, clear error messages are displayed with retry options.
+5. User is redirected back to the inbox after successful send.
 
-## 8. Settings
+## 8. Settings & Preferences
 1. User can access the settings page to:
-   - Toggle suggestion aggressiveness
-   - Change language
-   - Adjust personalization options
-2. Changes are saved automatically or with a save button, with feedback on success/failure.
+   - Toggle suggestion categories on/off
+   - Adjust AI suggestion aggressiveness
+   - Change writing style preferences
+   - Configure auto-save settings
+2. Changes are saved automatically with clear feedback.
+3. Settings persist across sessions.
 
-## 9. Logout
+## 9. Logout & Security
 1. User clicks the "Logout" button in the navigation.
 2. User is signed out and redirected to the landing page.
-3. All sensitive data is cleared from the client.
+3. All sensitive data and suggestion cache is cleared from the client.
+4. Auto-save is disabled during logout process.
 
 ---
 
-This flow =larifies all major user interactions, navigation, redirects, registration/login distinctions, and error handling, ensuring a robust and user-friendly experience for Email Radar. It ensures a seamless, AI-first email writing experience, integrating grammar, style, and smart productivity features directly into the user's Gmail workflow.
+This flow ensures a seamless, professional email editing experience with immediate grammar feedback, AI-powered enhancements, and robust suggestion management—delivering a next-generation writing assistant that surpasses traditional tools.

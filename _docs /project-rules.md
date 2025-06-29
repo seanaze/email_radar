@@ -90,16 +90,24 @@ This document defines the core rules for project structure, file naming, documen
 - Iconography: outline, minimal, consistent stroke width, accent colors for active/AI features.
 - Animations: Tailwind's `transition-all`, `duration-200`, glass fade for surfaces.
 
-## 7. Non-Functional Requirements
+## 7. Grammar & AI Engine Requirements
+
+- Use nspell-based custom grammar checking (not LanguageTool) for spelling, capitalization, punctuation, and basic grammar.
+- Implement TipTap rich text editor with custom ProseMirror extensions for suggestion underlining.
+- Grammar/spell check responses must be < 300 ms for real-time editing experience.
+- AI enhancement suggestions should be categorized: Correctness, Clarity, Engagement, Delivery.
+- All suggestions must be locally cached and dismissible by users.
+- Integrate OpenAI GPT-4 for context-aware rewrites and tone adjustments.
+
+## 8. Non-Functional Requirements
 
 - All services must operate on free tiers during development.
 - Encrypted token storage; minimal OAuth scopes for least-privilege access.
-- Grammar/spell check responses must be < 800 ms for emails ≤ 1,000 words.
+- Real-time suggestion rendering with debounced analysis (< 600ms delay).
 - Full WCAG 2.1 AA compliance for all user-facing features.
-- Comprehensive unit (Vitest) and e2e (Playwright) tests on critical flows.
-- Automated CI/CD with GitHub Actions and Vercel Preview deployments on every push to main.
+- Auto-save functionality with 1-second debounce for seamless editing.
 
-## 8. User Flow & Experience
+## 9. User Flow & Experience
 
 - Follow the defined user flow for authentication, inbox navigation, email editing, AI features, saving/sending, settings, and logout (see `user_flow.md`).
 - Ensure seamless, AI-first email writing experience with robust error handling and clear feedback at every step.
