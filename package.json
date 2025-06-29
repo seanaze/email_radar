@@ -11,7 +11,8 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "test:ui": "vitest --ui",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "firebase:deploy": "firebase deploy"
   },
   "keywords": [
     "email",
@@ -29,7 +30,7 @@
     "@reduxjs/toolkit": "^2.5.0",
     "@vitejs/plugin-react": "^4.6.0",
     "classnames": "^2.5.1",
-    "firebase": "^11.1.0",
+    "firebase": "^11.9.1",
     "next": "^14.2.18",
     "openai": "^4.73.1",
     "react": "^18.3.1",

@@ -27,10 +27,12 @@ You are an expert in JavaScript, TypeScript, Node.js, NextJS + App Router, React
 
 ## File Structure
 
-- Organize by feature/domain (e.g., `features/inbox/`, `features/auth/`, `features/settings/`, `features/ai/`).
-- Shared components in `components/`, utilities in `utils/`, state in `state/`.
-- Hooks: suffix with `use` (e.g., `useInbox.ts`).
-- Redux slices: suffix with `Slice` (e.g., `inboxSlice.ts`).
+- All source code lives in `src/` directory
+- Organize by feature/domain (e.g., `src/features/inbox/`, `src/features/auth/`, `src/features/settings/`, `src/features/ai/`)
+- Shared components in `src/components/`, utilities in `src/utils/`, state in `src/state/`
+- Next.js app router files in `src/app/`
+- Hooks: suffix with `use` (e.g., `useInbox.ts`)
+- Redux slices: suffix with `Slice` (e.g., `inboxSlice.ts`)
 
 ## UI/UX Requirements
 
