@@ -4,14 +4,17 @@
  */
 
 import { configureStore } from '@reduxjs/toolkit'
+import authReducer from '../features/auth/authSlice'
+import inboxReducer from '../features/inbox/inboxSlice'
 
 /**
- * @description Redux store configuration with RTK Query and dev tools
+ * @description Redux store configuration with feature slices
  * @returns {Store} Configured Redux store instance
  */
 export const store = configureStore({
   reducer: {
-    // Feature slices will be added here during MVP phase
+    auth: authReducer,
+    inbox: inboxReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
