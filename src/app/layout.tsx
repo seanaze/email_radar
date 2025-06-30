@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata = {
   title: 'Email Radar - AI-Powered Email Assistant',
-  description: 'Grammarly-style assistant for Gmail with real-time grammar checking and AI-powered rewrites',
+  description: 'AI-powered email analysis tool with grammar checking, tone analysis, and response prediction',
 }
 
 export default function RootLayout({

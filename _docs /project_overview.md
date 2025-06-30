@@ -1,34 +1,45 @@
 # @fileoverview
 ## Project Overview for Email Radar
 
-Email Radar is a Grammarly‑style assistant focused on email. The goal is to build a web‑based assistant that integrates with Gmail to deliver inline grammar/style corrections and AI‑powered rewrites for email composition
+Email Radar is an AI-powered email analysis tool that helps users write better emails by providing grammar corrections, tone analysis, and response predictions. Think Grammarly meets emotional intelligence.
 
-## Core Use Cases
+## Core MVP Features
 
-Google OAuth sign‑in and inbox listing
-Select a draft or existing message.
-Real‑time grammar & spell checking via custom nspell engine
-Inline accept / reject of fixes with categorized suggestions
-Save an updated draft back to Gmail
+1. **Grammar & Punctuation Correction**
+   - Real-time spell checking and grammar fixes
+   - Clean, aesthetic text editor interface
+   - One-click corrections
 
-## Phase 1 – Baseline Assistant
+2. **Tone Analysis & Visualization**
+   - Color-coded emotional tone mapping
+   - Visual feedback on how the email "feels"
+   - Sentiment indicators (professional, casual, urgent, etc.)
 
-Gmail OAuth (read, compose, send scopes).
-Rich text email editor with TipTap.
-Inbox list with basic filters (unread, drafts).
-Custom nspell grammar engine with visual suggestion underlines.
-Categorized suggestions (Correctness, Clarity, Engagement, Delivery).
-Apply fixes and push corrected draft to Gmail.
-Settings page (toggle suggestion categories, preferences).
+3. **Response Prediction**
+   - AI-generated preview of likely responses
+   - Helps users understand how their email might be received
+   - Contextual insights for better communication
 
-## Phase 2 – AI Enhancement
+## User Experience
 
-Context‑aware rewrites powered by an LLM
-Personalized style recommendations based on user goals
-Semantic search of past emails and corrections
-Smart templates & auto‑completion for quick replies
+1. User visits the website
+2. Sees a beautiful landing page with a prominent "Try Editor" CTA
+3. Opens the editor - a clean, Grammarly-style text box
+4. Pastes or types their email content
+5. Receives instant three-tier analysis
+6. Can copy the corrected text back to their email client
 
-## Ultimate Goal
+## Future Features (Coming Soon)
 
-Deliver a next‑generation email‑writing assistant that surpasses traditional grammar tools by demonstrates how AI-first principles and modern language models can revolutionize writing assistance—surpassing the capabilities of traditional tools like Grammarly.
+- Smart Inbox Integration - Direct Gmail/Outlook connection
+- Email Templates Library
+- Team Collaboration Features
+- Advanced Analytics Dashboard
+
+## Technology Focus
+
+- Beautiful, modern UI with smooth animations
+- Fast, responsive text analysis
+- Clear visual feedback and recommendations
+- Mobile-responsive design
 
