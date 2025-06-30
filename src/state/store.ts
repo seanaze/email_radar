@@ -6,6 +6,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import authReducer from '../features/auth/authSlice'
 import inboxReducer from '../features/inbox/inboxSlice'
+import aiReducer from '../features/ai/aiSlice'
 
 /**
  * @description Redux store configuration with feature slices
@@ -15,6 +16,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     inbox: inboxReducer,
+    ai: aiReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -27,7 +27,8 @@ const app = initializeApp(firebaseConfig)
 /**
  * @description Firebase Authentication instance
  */
-export const auth = getAuth(app)
+// Initialize auth only if app is properly configured
+export const auth = firebaseConfig.apiKey ? getAuth(app) : null
 
 /**
  * @description Firestore database instance

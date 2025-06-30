@@ -3,6 +3,8 @@
  * @description Main entry point showing product overview and sign-in option
  */
 
+import AuthButton from '../components/AuthButton';
+
 /**
  * @description Landing page component that displays Email Radar overview
  * @returns {JSX.Element} The landing page with product description and CTA
@@ -21,13 +23,11 @@ export default function HomePage(): JSX.Element {
             grammar corrections and intelligent rewrites.
           </p>
           
-          <div className="space-y-4">
-            <button className="btn-primary text-lg px-8 py-4">
-              Sign in with Google
-            </button>
+          <div className="space-y-6">
+            <AuthButton />
             
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Phase 1 Setup Complete - Ready for MVP Development
+              Secure Gmail integration • Real-time grammar checking • AI-powered enhancements
             </p>
           </div>
         </div>
