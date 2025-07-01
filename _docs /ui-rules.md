@@ -15,9 +15,9 @@
 
 ## Component Behaviors
 
-- **Navigation**: Persistent sidebar or top nav, always accessible. Navigation state is preserved (e.g., last viewed email).
-- **Inbox List**: Supports filtering, searching, and sorting. List items are tappable, with clear affordances for selection.
-- **Email Editor**: Inline grammar/style suggestions with accept/reject controls. Unsaved changes prompt before navigation.
+- **Navigation**: A minimal top bar with links to "Home", "Editor", and "Settings". Navigation state is preserved where relevant.
+- **Email Editor**: Large responsive text area with inline suggestion highlights and diff view. Unsaved changes prompt before navigation.
+- **Results Panel**: Displays tone badge (color chip) and mirrored reply with copy buttons. Appears below or beside the editor depending on screen size.
 - **Settings**: Accessible from all views. Changes are saved with clear feedback.
 - **Loading & Empty States**: Use skeleton loaders and clear empty state illustrations/messages.
 - **Modals/Dialogs**: Use for critical confirmations only. Always provide a clear way to dismiss.

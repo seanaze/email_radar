@@ -11,28 +11,25 @@ This document defines the scope and deliverables for the initial setup phase of 
 
 ## Deliverables
 
-### 1. Repository & Tooling ✅
+### 1. Repository & Tooling 
 - [x] Initialize Git repository and push to remote (GitHub).
 - [x] Add README with project overview and tech stack.
 - [x] Set up .gitignore and basic project structure (`src/`, `components/`, `features/`, etc.).
 - [x] Configure basic linting and project rules.
 
-### 2. Project Rules & Documentation ✅
+### 2. Project Rules & Documentation 
 - [x] Add `_docs/` directory with comprehensive documentation.
 - [x] Add @fileoverview headers and documentation standards.
 - [x] Document directory structure and naming conventions.
 - [x] Create grammar storage utilities for local state management.
 
 
-
-
-
-### 2. Framework & Core Dependencies ✅
+### 3. Framework & Core Dependencies 
 - [x] Scaffold Next.js app with App Router and TypeScript.
 - [x] Install and configure Tailwind CSS.
 - [x] Set up Redux Toolkit for state management with typed hooks.
 - [x] Configure Firebase Authentication and Firestore.
-- [x] Set up basic deployment configuration.
+- [x] Set up basic deployment configuration. (Vercel)
 
 
 ### 4. State Management Setup 

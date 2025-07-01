@@ -5,25 +5,23 @@ Brief overview, user flow, tech stack, and conventions for the Email Radar proje
 
 # Email Radar
 
-Email Radar is a next-generation, AI-first assistant for email composition. It integrates directly with Gmail to deliver inline grammar/style corrections and AI-powered rewrites, surpassing traditional tools like Grammarly. The project is designed for modularity, scalability, and maximum compatibility with modern AI tools.
+Email Radar is a next-generation, AI-first assistant for email composition. It delivers three levels of AI assistance inside a beautiful text editor—grammar & punctuation correction, tone & emotion analysis with color feedback, and a mirrored response suggestion—surpassing traditional writing helpers like Grammarly and Quillbot.
 
 ## Core Features
-- Google OAuth sign-in and inbox listing
-- Real-time grammar & spell checking (custom nspell engine)
-- Inline accept/reject of fixes with diff UI
-- Save updated drafts back to Gmail
-- Context-aware rewrites powered by LLM (AI)
-- Personalized style recommendations
-- Semantic search of past emails and corrections
-- Smart templates & auto-completion
+- Responsive rich-text editor where users can paste or write email content
+- One-click grammar & punctuation correction with diff UI (Step 1)
+- Color-coded tone and emotion analysis (Step 2)
+- AI-generated mirrored response draft that matches the user's tone and context (Step 3)
+- Optional profile & settings to save preferences
+- Roadmap: Smart Inbox (Gmail integration) and template library (coming soon)
 
 ## User Flow
-1. **Authentication:** Sign in with Google (OAuth). Redirect to inbox on success.
-2. **Inbox Browsing:** List, filter, and search emails. Select drafts or messages to edit.
-3. **Editing:** Real-time grammar/spell check, inline suggestions, AI-powered rewrites.
-4. **Saving/Sending:** Save drafts or send emails directly. Success/error feedback.
-5. **Settings:** Adjust suggestion aggressiveness, language, and personalization.
-6. **Logout:** Secure sign-out, clear sensitive data.
+1. **Visit Site:** User lands on Email Radar and clicks "Open Editor".
+2. **Compose / Paste:** User writes or pastes their email text into the editor.
+3. **Analyze:** User clicks the "Analyze" button to run the three-step AI pipeline.
+4. **Review Results:** Corrected text, tone badge, and mirrored reply appear with copy/download actions.
+5. **Settings (optional):** User can adjust tone colors, AI verbosity, and other preferences.
+*Authentication:** Sign in with Google (OAuth).
 
 See [`_docs/user_flow.md`](./_docs/user_flow.md) for full details.
 
@@ -41,7 +39,7 @@ See [`_docs/user_flow.md`](./_docs/user_flow.md) for full details.
 See [`_docs/tech_stack.md`](./_docs/tech_stack.md) for more details.
 
 ## Project Conventions
-- **File Structure:** Organized by feature/domain (e.g., `inbox/`, `auth/`, `settings/`, `ai/`). Shared code in `components/`, `utils/`, `state/`.
+- **File Structure:** Organized by feature/domain (e.g., `editor/`, `settings/`, `ai/`). Shared code in `components/`, `utils/`, `state/`.
 - **File Size:** All files < 500 lines for AI compatibility.
 - **Naming:** Descriptive, kebab-case or PascalCase. Hooks: `useX.ts`. Redux: `xSlice.ts`.
 - **Documentation:** Every file starts with `@fileoverview`. All functions/components use JSDoc/TSDoc.

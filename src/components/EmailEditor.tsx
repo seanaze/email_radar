@@ -1,306 +1,289 @@
 /**
- * @fileoverview TipTap rich text editor for email composition
- * @description Email editor with real-time grammar checking and AI suggestions
+ * @fileoverview
+ * Email text editor component with TipTap rich text editor.
+ * Provides text input and triggers analysis on demand with undo/redo support.
  */
 
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
-import Link from '@tiptap/extension-link';
-import { 
-  Bold, Italic, List, ListOrdered, Link as LinkIcon, 
-  Save, Send, Sparkles, Settings 
-} from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../state/hooks';
-import { updateCurrentEmailBody } from '../features/inbox/inboxSlice';
-import { useAiSuggestions } from '../features/ai/hooks/useAiSuggestions';
-import { Email } from '../types/database';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { TextHistory } from '@/utils/textHistory';
 
-/**
- * @description Email editor component props
- */
 interface EmailEditorProps {
-  email: Email;
-  onSave?: (content: string) => void;
-  onSend?: (content: string) => void;
-  className?: string;
+  onAnalyze: (text: string) => void;
+  isAnalyzing?: boolean;
+}
+
+export interface EmailEditorRef {
+  updateText: (text: string) => void;
 }
 
 /**
- * @description TipTap rich text editor component for email composition
+ * @description Rich text editor for email composition and analysis
  * @param {EmailEditorProps} props - Component props
- * @returns {JSX.Element} Rich text editor with toolbar and AI suggestions
+ * @returns {JSX.Element} Editor component with analyze button
  */
-export default function EmailEditor({ 
-  email, 
-  onSave, 
-  onSend, 
-  className = '' 
-}: EmailEditorProps): JSX.Element {
-  const dispatch = useAppDispatch();
-  const { suggestions, isGenerating, debouncedGenerateSuggestion } = useAiSuggestions();
+const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
+  ({ onAnalyze, isAnalyzing = false }, ref) => {
+    const historyRef = useRef(new TextHistory());
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+    const lastTextRef = useRef('');
 
-  // Initialize TipTap editor
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: 'Start writing your email...',
-      }),
-      CharacterCount,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-primary-500 underline hover:text-primary-600 transition-colors',
+    const editor = useEditor({
+      extensions: [
+        StarterKit.configure({
+          history: false, // Disable built-in history to use our custom one
+        }),
+        Placeholder.configure({
+          placeholder: 'Start typing your email or paste existing content...',
+        }),
+        CharacterCount.configure({
+          limit: 10000,
+        }),
+      ],
+      content: '',
+      editorProps: {
+        attributes: {
+          class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-[400px] p-6 text-slate-800 dark:text-slate-200',
         },
-      }),
-    ],
-    content: email.corrected_body || email.original_body,
-    onUpdate: ({ editor }) => {
-      const content = editor.getHTML();
-      
-      // Update Redux state
-      dispatch(updateCurrentEmailBody({ 
-        field: 'corrected_body', 
-        value: content 
-      }));
+      },
+      onUpdate: ({ editor }) => {
+        const text = editor.getText();
+        // Only add to history if text actually changed and after a small delay
+        if (text !== lastTextRef.current) {
+          lastTextRef.current = text;
+          setTimeout(() => {
+            if (editor.getText() === text) {
+              historyRef.current.push(text);
+              updateHistoryState();
+            }
+          }, 500);
+        }
+      },
+    });
 
-      // Generate AI suggestions for longer text
-      const textContent = editor.getText();
-      if (textContent.length > 10) {
-        debouncedGenerateSuggestion(textContent, 'clarity');
+    const updateHistoryState = () => {
+      setCanUndo(historyRef.current.canUndo());
+      setCanRedo(historyRef.current.canRedo());
+    };
+
+    const handleUndo = () => {
+      if (!editor) return;
+      const previousText = historyRef.current.undo();
+      if (previousText !== null) {
+        editor.commands.setContent(previousText);
+        lastTextRef.current = previousText;
+        updateHistoryState();
       }
-    },
-  });
+    };
 
-  /**
-   * @description Handles text formatting commands
-   */
-  const handleFormat = useCallback((command: string) => {
-    if (!editor) return;
+    const handleRedo = () => {
+      if (!editor) return;
+      const nextText = historyRef.current.redo();
+      if (nextText !== null) {
+        editor.commands.setContent(nextText);
+        lastTextRef.current = nextText;
+        updateHistoryState();
+      }
+    };
 
-    switch (command) {
-      case 'bold':
-        editor.chain().focus().toggleBold().run();
-        break;
-      case 'italic':
-        editor.chain().focus().toggleItalic().run();
-        break;
-      case 'bulletList':
-        editor.chain().focus().toggleBulletList().run();
-        break;
-      case 'orderedList':
-        editor.chain().focus().toggleOrderedList().run();
-        break;
-      default:
-        break;
-    }
-  }, [editor]);
+    // Expose updateText method to parent
+    useImperativeHandle(ref, () => ({
+      updateText: (text: string) => {
+        if (!editor) return;
+        editor.commands.setContent(text);
+        lastTextRef.current = text;
+        historyRef.current.push(text);
+        updateHistoryState();
+      }
+    }), [editor]);
 
-  /**
-   * @description Handles adding/removing links
-   */
-  const handleLink = useCallback(() => {
-    if (!editor) return;
+    // Keyboard shortcuts
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          handleUndo();
+        } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+          e.preventDefault();
+          handleRedo();
+        }
+      };
 
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL', previousUrl);
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [editor]);
 
-    if (url === null) return;
+    const handleAnalyze = () => {
+      if (!editor) return;
+      
+      const text = editor.getText();
+      onAnalyze(text);
+    };
 
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
+    const handleClear = () => {
+      if (!editor) return;
+      editor.commands.clearContent();
+      historyRef.current.clear();
+      historyRef.current.push('');
+      updateHistoryState();
+    };
 
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }, [editor]);
+    const characterCount = editor?.storage.characterCount.characters() || 0;
+    const wordCount = editor?.storage.characterCount.words() || 0;
 
-  /**
-   * @description Handles save action
-   */
-  const handleSave = useCallback(() => {
-    if (!editor) return;
-    const content = editor.getHTML();
-    onSave?.(content);
-  }, [editor, onSave]);
+    // Calculate reading time (average 200 words per minute)
+    const readingTime = Math.ceil(wordCount / 200);
 
-  /**
-   * @description Handles send action
-   */
-  const handleSend = useCallback(() => {
-    if (!editor) return;
-    const content = editor.getHTML();
-    onSend?.(content);
-  }, [editor, onSend]);
-
-  /**
-   * @description Auto-save functionality with debouncing
-   */
-  useEffect(() => {
-    if (!editor) return;
-
-    const timeoutId = setTimeout(() => {
-      const content = editor.getHTML();
-      onSave?.(content);
-    }, 2000); // Auto-save after 2 seconds of inactivity
-
-    return () => clearTimeout(timeoutId);
-  }, [editor?.getHTML(), onSave]);
-
-  // Calculate writing metrics
-  const characterCount = editor?.storage.characterCount.characters() || 0;
-  const wordCount = editor?.storage.characterCount.words() || 0;
-
-  if (!editor) {
     return (
-      <div className="animate-pulse">
-        <div className="h-10 bg-slate-300 dark:bg-slate-600 rounded mb-4"></div>
-        <div className="h-64 bg-slate-300 dark:bg-slate-600 rounded"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Toolbar */}
-      <div className="glass-surface rounded-lg p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Text formatting */}
-          <button
-            onClick={() => handleFormat('bold')}
-            className={`p-2 rounded hover:bg-white/50 dark:hover:bg-slate-700/50 transition-colors ${
-              editor.isActive('bold') ? 'bg-primary-500 text-white' : 'text-slate-600 dark:text-slate-300'
-            }`}
-            aria-label="Bold"
-          >
-            <Bold className="h-4 w-4" />
-          </button>
-          
-          <button
-            onClick={() => handleFormat('italic')}
-            className={`p-2 rounded hover:bg-white/50 dark:hover:bg-slate-700/50 transition-colors ${
-              editor.isActive('italic') ? 'bg-primary-500 text-white' : 'text-slate-600 dark:text-slate-300'
-            }`}
-            aria-label="Italic"
-          >
-            <Italic className="h-4 w-4" />
-          </button>
-
-          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
-
-          {/* Lists */}
-          <button
-            onClick={() => handleFormat('bulletList')}
-            className={`p-2 rounded hover:bg-white/50 dark:hover:bg-slate-700/50 transition-colors ${
-              editor.isActive('bulletList') ? 'bg-primary-500 text-white' : 'text-slate-600 dark:text-slate-300'
-            }`}
-            aria-label="Bullet List"
-          >
-            <List className="h-4 w-4" />
-          </button>
-          
-          <button
-            onClick={() => handleFormat('orderedList')}
-            className={`p-2 rounded hover:bg-white/50 dark:hover:bg-slate-700/50 transition-colors ${
-              editor.isActive('orderedList') ? 'bg-primary-500 text-white' : 'text-slate-600 dark:text-slate-300'
-            }`}
-            aria-label="Numbered List"
-          >
-            <ListOrdered className="h-4 w-4" />
-          </button>
-
-          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
-
-          {/* Link */}
-          <button
-            onClick={handleLink}
-            className={`p-2 rounded hover:bg-white/50 dark:hover:bg-slate-700/50 transition-colors ${
-              editor.isActive('link') ? 'bg-primary-500 text-white' : 'text-slate-600 dark:text-slate-300'
-            }`}
-            aria-label="Add Link"
-          >
-            <LinkIcon className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* AI Status */}
-        <div className="flex items-center gap-3">
-          {isGenerating && (
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-              <Sparkles className="h-4 w-4 animate-pulse text-primary-500" />
-              Analyzing...
+      <div className="flex flex-col gap-6">
+        {/* Editor Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Your Text</h2>
+          <div className="flex items-center gap-4">
+            {/* Undo/Redo buttons */}
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+              <button 
+                onClick={handleUndo}
+                disabled={!canUndo}
+                className={`p-2 rounded-md transition-colors ${
+                  canUndo 
+                    ? 'hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400' 
+                    : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                }`}
+                title="Undo (Ctrl+Z)"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+              </button>
+              <button 
+                onClick={handleRedo}
+                disabled={!canRedo}
+                className={`p-2 rounded-md transition-colors ${
+                  canRedo 
+                    ? 'hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400' 
+                    : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                }`}
+                title="Redo (Ctrl+Y)"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                </svg>
+              </button>
             </div>
-          )}
-          
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            {wordCount} words • {characterCount} characters
+            
+            {/* Quick actions */}
+            <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Format text">
+              <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+              </svg>
+            </button>
+            <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Add template">
+              <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Editor */}
-      <div className="relative">
-        <EditorContent
-          editor={editor}
-          className="glass-surface rounded-lg p-6 min-h-[300px] prose prose-slate dark:prose-invert max-w-none focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-offset-slate-900 transition-all"
-        />
-        
-        {/* AI Suggestions Overlay */}
-        {suggestions.length > 0 && (
-          <div className="absolute right-4 top-4">
-            <div className="glass-surface rounded-lg p-3 w-64 space-y-2">
-              <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary-500" />
-                AI Suggestions
-              </h4>
-              
-              {suggestions.slice(0, 3).map((suggestion) => (
-                <div
-                  key={suggestion.id}
-                  className="p-2 bg-white/50 dark:bg-slate-700/50 rounded text-sm"
-                >
-                  <div className="font-medium text-slate-800 dark:text-slate-200 mb-1">
-                    {suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)}
-                  </div>
-                  <div className="text-slate-600 dark:text-slate-400 text-xs">
-                    {suggestion.explanation}
-                  </div>
+        {/* Editor Container */}
+        <div className="card-professional group">
+          <div className="relative">
+            {/* Editor toolbar placeholder */}
+            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-white dark:from-slate-800 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
+            
+            {/* Main editor */}
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-300 hover:border-primary-300 dark:hover:border-primary-700 focus-within:border-primary-500 dark:focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-500/20">
+              <EditorContent editor={editor} />
+            </div>
+          </div>
+        </div>
+
+        {/* Editor Footer */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+              <span>{wordCount} words</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{characterCount} characters</span>
+            </div>
+            {wordCount > 0 && (
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{readingTime} min read</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={handleClear}
+              disabled={characterCount === 0}
+              className={`btn-secondary ${characterCount === 0 ? 'btn-disabled' : ''}`}
+            >
+              Clear
+            </button>
+            
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing || characterCount === 0}
+              className={`btn-primary flex items-center gap-3 ${isAnalyzing || characterCount === 0 ? 'btn-disabled' : ''}`}
+            >
+              {isAnalyzing ? (
+                <>
+                  <div className="loading-shimmer h-5 w-5 rounded-full"></div>
+                  <span>Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <span>Analyze Text</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Tips section */}
+        {characterCount === 0 && (
+          <div className="animate-fadeIn">
+            <div className="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-xl p-4 border border-primary-200 dark:border-primary-800">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-sm">
+                  <p className="font-medium text-primary-900 dark:text-primary-100 mb-1">Pro tip</p>
+                  <p className="text-primary-700 dark:text-primary-300">
+                    You can paste an email draft or start typing from scratch. Our AI will analyze grammar, tone, and suggest improvements.
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         )}
       </div>
+    );
+  }
+);
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-slate-500 dark:text-slate-400">
-          Auto-saved • {suggestions.length} suggestions available
-        </div>
-        
-        <div className="flex gap-3">
-          <button
-            onClick={handleSave}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <Save className="h-4 w-4" />
-            Save Draft
-          </button>
-          
-          <button
-            onClick={handleSend}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Send className="h-4 w-4" />
-            Send Email
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-} 
+EmailEditor.displayName = 'EmailEditor';
+
+export default EmailEditor; 

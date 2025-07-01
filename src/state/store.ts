@@ -1,22 +1,18 @@
 /**
- * @fileoverview Redux store configuration for Email Radar
- * @description Configures Redux Toolkit store with middleware and dev tools
+ * @fileoverview
+ * Redux store configuration for Email Radar.
+ * Manages application state for auth and future features.
  */
 
 import { configureStore } from '@reduxjs/toolkit'
 import authReducer from '../features/auth/authSlice'
-import inboxReducer from '../features/inbox/inboxSlice'
-import aiReducer from '../features/ai/aiSlice'
 
 /**
- * @description Redux store configuration with feature slices
- * @returns {Store} Configured Redux store instance
+ * @description Redux store instance with auth slice
  */
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    inbox: inboxReducer,
-    ai: aiReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
