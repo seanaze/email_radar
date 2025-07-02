@@ -58,7 +58,7 @@ export default function ReduxExample() {
    */
   const handleLoadEmails = () => {
     if (user) {
-      dispatch(loadEmailsThunk({ userId: user.google_id }));
+      dispatch(loadEmailsThunk({ userId: user.id }));
     }
   };
 

@@ -67,7 +67,7 @@ export async function exampleGrammarWorkflow() {
         correctedText.substring(correction.offset + correction.length);
     });
 
-  // 6. Save final corrected email to Firestore (only the result, not the corrections)
+  // 6. Save final corrected email to database (only the result, not the corrections)
   await updateEmail(emailId, {
     original_body: originalText,
     corrected_body: correctedText,
@@ -115,7 +115,7 @@ export async function exampleAiWorkflow() {
   // 4. If user accepts, apply to email
   updateAiEnhancement(emailId, enhancementId, { accepted: true });
 
-  // 5. Save final result to Firestore
+  // 5. Save final result to database
   await updateEmail(emailId, {
     corrected_body: enhancement.result,
   });

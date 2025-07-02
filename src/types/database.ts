@@ -1,10 +1,10 @@
 /**
- * @fileoverview Simplified database types for Email Radar Firestore collections
- * @description Defines TypeScript interfaces for essential database entities only
+ * @fileoverview Database types for Email Radar Supabase tables
+ * @description Defines TypeScript interfaces for essential database entities
  */
 
 /**
- * @description User document structure in Firestore
+ * @description User document structure in database
  */
 export interface User {
   google_id: string;
@@ -15,7 +15,7 @@ export interface User {
 }
 
 /**
- * @description User settings document structure in Firestore
+ * @description User settings structure
  */
 export interface UserSettings {
   suggestion_aggressiveness: number; // 1-5 scale
@@ -24,7 +24,7 @@ export interface UserSettings {
 }
 
 /**
- * @description Email document structure in Firestore
+ * @description Email document structure in database
  */
 export interface Email {
   user_id: string;
@@ -39,15 +39,14 @@ export interface Email {
 }
 
 /**
- * @description Firestore collection names as constants
+ * @description Supabase table names as constants
  */
-export const COLLECTIONS = {
-  USERS: 'users',
-  USER_SETTINGS: 'user_settings',
+export const TABLES = {
+  PROFILES: 'profiles',
   EMAILS: 'emails',
 } as const;
 
 /**
- * @description Type for collection names
+ * @description Type for table names
  */
-export type CollectionName = typeof COLLECTIONS[keyof typeof COLLECTIONS]; 
+export type TableName = typeof TABLES[keyof typeof TABLES]; 
