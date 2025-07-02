@@ -1,4 +1,5 @@
 import ReduxProvider from '../components/ReduxProvider'
+import AuthProvider from '../components/AuthProvider'
 import './globals.css'
 
 export const metadata = {
@@ -15,7 +16,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ReduxProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ReduxProvider>
       </body>
     </html>

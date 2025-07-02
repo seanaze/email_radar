@@ -16,7 +16,9 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore';
-import { db } from './firebase';
+// import { db } from './firebase';
+// Temporarily using null db - migrating to Supabase
+const db = null as any;
 import { User, UserSettings, Email, COLLECTIONS } from '../types/database';
 
 /**

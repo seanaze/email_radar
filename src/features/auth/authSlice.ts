@@ -120,6 +120,24 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     /**
+     * @description Sets the authenticated user
+     */
+    setUser: (state, action: PayloadAction<any>) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+    },
+    
+    /**
+     * @description Clears the authenticated user
+     */
+    clearUser: (state) => {
+      state.user = null;
+      state.settings = null;
+      state.isAuthenticated = false;
+      state.error = null;
+    },
+    
+    /**
      * @description Clears authentication state on logout
      */
     logout: (state) => {
@@ -193,8 +211,13 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { setUser, clearUser, logout, clearError } = authSlice.actions;
 export default authSlice.reducer;
+
+/**
+ * @description Loads user profile by ID (exported as action for compatibility)
+ */
+export const loadUserProfile = (userId: string) => loadUserThunk(userId);
 
 /**
  * @description Selectors for authentication state

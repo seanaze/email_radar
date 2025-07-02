@@ -21,17 +21,26 @@ const firebaseConfig = {
 
 /**
  * @description Initialize Firebase app
+ * Temporarily disabled - using Supabase for authentication
  */
-const app = initializeApp(firebaseConfig)
+// const app = initializeApp(firebaseConfig)
 
 /**
  * @description Firebase Authentication instance
+ * Temporarily disabled - using Supabase for authentication
  */
-export const auth = getAuth(app)
+// export const auth = getAuth(app)
 
 /**
  * @description Firestore database instance
+ * Temporarily disabled - using Supabase for authentication
  */
-export const db = getFirestore(app)
+// export const db = getFirestore(app)
 
+// export default app
+
+// Temporary exports to prevent import errors
+export const auth = null as any
+export const db = null as any
+const app = null as any
 export default app
