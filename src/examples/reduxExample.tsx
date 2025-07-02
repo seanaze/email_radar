@@ -7,7 +7,7 @@
 
 import { useAppDispatch, useAppSelector } from '../state/hooks';
 import {
-  loadUserThunk,
+  loadUserProfile,
   logout,
   selectUser,
   selectIsAuthenticated,
@@ -42,8 +42,8 @@ export default function ReduxExample() {
    * @description Handle user login
    */
   const handleLogin = () => {
-    // In real app, this would be called after Firebase Auth success
-    dispatch(loadUserThunk('user_uid_from_firebase'));
+    // In real app, this would be called after Supabase Auth success
+    dispatch(loadUserProfile('user_uid_from_supabase'));
   };
 
   /**

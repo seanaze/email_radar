@@ -4,13 +4,26 @@
  */
 
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { Email } from '../../types/database';
-import {
-  createEmail,
-  getEmail,
-  getUserEmails,
-  updateEmail,
-} from '../../utils/firestore';
+import { supabase } from '../../utils/supabase';
+
+/**
+ * @description Email interface
+ */
+export interface Email {
+  id: string;
+  user_id: string;
+  gmail_id: string;
+  thread_id?: string;
+  subject?: string;
+  sender?: string;
+  recipients?: string[];
+  original_body: string;
+  corrected_body?: string;
+  suggestions?: any[];
+  status: 'draft' | 'sent' | 'processing';
+  created_at: string;
+  updated_at: string;
+}
 
 /**
  * @description Inbox state interface
@@ -47,59 +60,83 @@ const initialState: InboxState = {
 /**
  * @description Async thunk to load user's emails
  * @param {Object} payload - Load emails payload
- * @param {string} payload.userId - User's Firebase Auth UID
+ * @param {string} payload.userId - User's Supabase Auth UID
  * @param {number} payload.maxResults - Maximum number of emails to return
  */
 export const loadEmailsThunk = createAsyncThunk(
   'inbox/loadEmails',
   async ({ userId, maxResults = 50 }: { userId: string; maxResults?: number }) => {
-    const emails = await getUserEmails(userId, maxResults);
-    return emails;
+    const { data: emails, error } = await supabase
+      .from('emails')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(maxResults);
+
+    if (error) throw error;
+    
+    return emails as Email[];
   }
 );
 
 /**
  * @description Async thunk to load a specific email
- * @param {string} emailId - Email document ID
+ * @param {string} emailId - Email ID
  */
 export const loadEmailThunk = createAsyncThunk(
   'inbox/loadEmail',
   async (emailId: string) => {
-    const email = await getEmail(emailId);
+    const { data: email, error } = await supabase
+      .from('emails')
+      .select('*')
+      .eq('id', emailId)
+      .single();
+
+    if (error) throw error;
     
-    if (!email) {
-      throw new Error('Email not found');
-    }
-    
-    return email;
+    return email as Email;
   }
 );
 
 /**
  * @description Async thunk to create a new email
  * @param {Object} payload - Create email payload
- * @param {string} payload.emailId - Unique email document ID
- * @param {Email} payload.emailData - Email data to store
+ * @param {Omit<Email, 'id' | 'created_at' | 'updated_at'>} payload.emailData - Email data to store
  */
 export const createEmailThunk = createAsyncThunk(
   'inbox/createEmail',
-  async ({ emailId, emailData }: { emailId: string; emailData: Email }) => {
-    await createEmail(emailId, emailData);
-    return { emailId, emailData };
+  async ({ emailData }: { emailData: Omit<Email, 'id' | 'created_at' | 'updated_at'> }) => {
+    const { data: email, error } = await supabase
+      .from('emails')
+      .insert(emailData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return email as Email;
   }
 );
 
 /**
  * @description Async thunk to update an email
  * @param {Object} payload - Update email payload
- * @param {string} payload.emailId - Email document ID
+ * @param {string} payload.emailId - Email ID
  * @param {Partial<Email>} payload.updates - Email fields to update
  */
 export const updateEmailThunk = createAsyncThunk(
   'inbox/updateEmail',
   async ({ emailId, updates }: { emailId: string; updates: Partial<Email> }) => {
-    await updateEmail(emailId, updates);
-    return { emailId, updates };
+    const { data: email, error } = await supabase
+      .from('emails')
+      .update(updates)
+      .eq('id', emailId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return email as Email;
   }
 );
 
@@ -187,8 +224,8 @@ const inboxSlice = createSlice({
       })
       .addCase(createEmailThunk.fulfilled, (state, action) => {
         state.isSaving = false;
-        state.emails.unshift(action.payload.emailData);
-        state.currentEmail = action.payload.emailData;
+        state.emails.unshift(action.payload);
+        state.currentEmail = action.payload;
       })
       .addCase(createEmailThunk.rejected, (state, action) => {
         state.isSaving = false;
@@ -205,15 +242,15 @@ const inboxSlice = createSlice({
         
         // Update email in list
         const emailIndex = state.emails.findIndex(
-          email => email.gmail_id === action.payload.emailId
+          email => email.id === action.payload.id
         );
         if (emailIndex !== -1) {
-          state.emails[emailIndex] = { ...state.emails[emailIndex], ...action.payload.updates };
+          state.emails[emailIndex] = action.payload;
         }
         
         // Update current email if it matches
-        if (state.currentEmail && state.currentEmail.gmail_id === action.payload.emailId) {
-          state.currentEmail = { ...state.currentEmail, ...action.payload.updates };
+        if (state.currentEmail && state.currentEmail.id === action.payload.id) {
+          state.currentEmail = action.payload;
         }
       })
       .addCase(updateEmailThunk.rejected, (state, action) => {

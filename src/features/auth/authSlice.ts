@@ -1,24 +1,40 @@
 /**
  * @fileoverview Redux slice for authentication state management
- * @description Handles user authentication, Firebase tokens, and user settings state
+ * @description Handles user authentication with Supabase and user settings state
  */
 
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { User, UserSettings } from '../../types/database';
-import {
-  createUser,
-  getUser,
-  updateUserTokens,
-  createUserSettings,
-  getUserSettings,
-  updateUserSettings,
-} from '../../utils/firestore';
+import { supabase } from '../../utils/supabase';
+import type { User } from '@supabase/supabase-js';
+
+/**
+ * @description User settings interface
+ */
+export interface UserSettings {
+  suggestion_aggressiveness: number;
+  language: string;
+  ai_features_enabled: boolean;
+}
+
+/**
+ * @description User profile interface
+ */
+export interface UserProfile {
+  id: string;
+  email?: string;
+  full_name?: string;
+  avatar_url?: string;
+  settings?: UserSettings;
+  created_at?: string;
+  updated_at?: string;
+}
 
 /**
  * @description Authentication state interface
  */
 interface AuthState {
   user: User | null;
+  profile: UserProfile | null;
   settings: UserSettings | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -30,6 +46,7 @@ interface AuthState {
  */
 const initialState: AuthState = {
   user: null,
+  profile: null,
   settings: null,
   isAuthenticated: false,
   isLoading: false,
@@ -37,78 +54,43 @@ const initialState: AuthState = {
 };
 
 /**
- * @description Async thunk to create a new user after OAuth
- * @param {Object} payload - User creation payload
- * @param {string} payload.uid - Firebase Auth UID
- * @param {User} payload.userData - User data from OAuth
+ * @description Async thunk to load user profile and settings
+ * @param {string} userId - Supabase user ID
  */
-export const createUserThunk = createAsyncThunk(
-  'auth/createUser',
-  async ({ uid, userData }: { uid: string; userData: User }) => {
-    await createUser(uid, userData);
-    
-    // Create default settings for new user
-    const defaultSettings: UserSettings = {
-      suggestion_aggressiveness: 3,
-      language: 'en-US',
-      ai_features_enabled: true,
-    };
-    await createUserSettings(uid, defaultSettings);
-    
-    return { user: userData, settings: defaultSettings };
-  }
-);
+export const loadUserProfile = createAsyncThunk(
+  'auth/loadUserProfile',
+  async (userId: string) => {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-/**
- * @description Async thunk to load user data and settings
- * @param {string} uid - Firebase Auth UID
- */
-export const loadUserThunk = createAsyncThunk(
-  'auth/loadUser',
-  async (uid: string) => {
-    const [user, settings] = await Promise.all([
-      getUser(uid),
-      getUserSettings(uid),
-    ]);
+    if (error) throw error;
     
-    if (!user) {
-      throw new Error('User not found');
-    }
-    
-    return { user, settings };
-  }
-);
-
-/**
- * @description Async thunk to refresh user tokens
- * @param {Object} payload - Token refresh payload
- * @param {string} payload.uid - Firebase Auth UID
- * @param {string} payload.accessToken - New access token
- * @param {string} payload.refreshToken - New refresh token
- */
-export const refreshTokensThunk = createAsyncThunk(
-  'auth/refreshTokens',
-  async ({ uid, accessToken, refreshToken }: {
-    uid: string;
-    accessToken: string;
-    refreshToken: string;
-  }) => {
-    await updateUserTokens(uid, accessToken, refreshToken);
-    return { accessToken, refreshToken };
+    return profile as UserProfile;
   }
 );
 
 /**
  * @description Async thunk to update user settings
  * @param {Object} payload - Settings update payload
- * @param {string} payload.uid - Firebase Auth UID
+ * @param {string} payload.userId - Supabase user ID
  * @param {Partial<UserSettings>} payload.updates - Settings to update
  */
 export const updateSettingsThunk = createAsyncThunk(
   'auth/updateSettings',
-  async ({ uid, updates }: { uid: string; updates: Partial<UserSettings> }) => {
-    await updateUserSettings(uid, updates);
-    return updates;
+  async ({ userId, updates }: { userId: string; updates: Partial<UserSettings> }) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ settings: updates })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return data.settings as UserSettings;
   }
 );
 
@@ -122,7 +104,7 @@ const authSlice = createSlice({
     /**
      * @description Sets the authenticated user
      */
-    setUser: (state, action: PayloadAction<any>) => {
+    setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
       state.isAuthenticated = true;
     },
@@ -132,6 +114,7 @@ const authSlice = createSlice({
      */
     clearUser: (state) => {
       state.user = null;
+      state.profile = null;
       state.settings = null;
       state.isAuthenticated = false;
       state.error = null;
@@ -142,6 +125,7 @@ const authSlice = createSlice({
      */
     logout: (state) => {
       state.user = null;
+      state.profile = null;
       state.settings = null;
       state.isAuthenticated = false;
       state.error = null;
@@ -156,47 +140,19 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Create user cases
-      .addCase(createUserThunk.pending, (state) => {
+      // Load user profile cases
+      .addCase(loadUserProfile.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(createUserThunk.fulfilled, (state, action) => {
+      .addCase(loadUserProfile.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
-        state.settings = action.payload.settings;
-        state.isAuthenticated = true;
+        state.profile = action.payload;
+        state.settings = action.payload.settings || null;
       })
-      .addCase(createUserThunk.rejected, (state, action) => {
+      .addCase(loadUserProfile.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to create user';
-      })
-      
-      // Load user cases
-      .addCase(loadUserThunk.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(loadUserThunk.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = action.payload.user;
-        state.settings = action.payload.settings;
-        state.isAuthenticated = true;
-      })
-      .addCase(loadUserThunk.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.error.message || 'Failed to load user';
-      })
-      
-      // Refresh tokens cases
-      .addCase(refreshTokensThunk.fulfilled, (state, action) => {
-        if (state.user) {
-          state.user.access_token = action.payload.accessToken;
-          state.user.refresh_token = action.payload.refreshToken;
-        }
-      })
-      .addCase(refreshTokensThunk.rejected, (state, action) => {
-        state.error = action.error.message || 'Failed to refresh tokens';
+        state.error = action.error.message || 'Failed to load user profile';
       })
       
       // Update settings cases
@@ -215,14 +171,10 @@ export const { setUser, clearUser, logout, clearError } = authSlice.actions;
 export default authSlice.reducer;
 
 /**
- * @description Loads user profile by ID (exported as action for compatibility)
- */
-export const loadUserProfile = (userId: string) => loadUserThunk(userId);
-
-/**
  * @description Selectors for authentication state
  */
 export const selectUser = (state: { auth: AuthState }) => state.auth.user;
+export const selectUserProfile = (state: { auth: AuthState }) => state.auth.profile;
 export const selectUserSettings = (state: { auth: AuthState }) => state.auth.settings;
 export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state: { auth: AuthState }) => state.auth.isLoading;

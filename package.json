@@ -11,8 +11,7 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "test:ui": "vitest --ui",
-    "type-check": "tsc --noEmit",
-    "firebase:deploy": "firebase deploy"
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "email",
