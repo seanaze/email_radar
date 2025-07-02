@@ -1,50 +1,37 @@
 /**
  * @fileoverview
- * Grammar suggestions component for displaying corrected text with visual diff
+ * Grammar suggestions component for displaying writing score and suggestions list
+ * Inline grammar corrections are handled directly in the editor
  */
 
 'use client';
 
-import { useState } from 'react';
-import TextDiff from './TextDiff';
+interface Suggestion {
+  type: string;
+  message: string;
+  severity: 'error' | 'warning' | 'info';
+  before?: string;
+  after?: string;
+}
 
 interface GrammarSuggestionsProps {
   originalText: string;
   correctedText?: string;
-  suggestions: Array<{
-    type: string;
-    message: string;
-    severity: 'error' | 'warning' | 'info';
-  }>;
+  suggestions: Suggestion[];
   onApplyCorrections?: (correctedText: string) => void;
 }
 
-export default function GrammarSuggestions({ originalText, correctedText, suggestions, onApplyCorrections }: GrammarSuggestionsProps) {
-  const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'inline' | 'side-by-side'>('inline');
-  const [showDiff, setShowDiff] = useState(true);
-  const [isApplied, setIsApplied] = useState(false);
-
-  const displayText = correctedText || originalText;
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(displayText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  const handleApply = () => {
-    if (onApplyCorrections && correctedText) {
-      onApplyCorrections(correctedText);
-      setIsApplied(true);
-      setTimeout(() => setIsApplied(false), 2000);
-    }
-  };
-
+/**
+ * @description Displays writing score and suggestions for improvement
+ * @param {GrammarSuggestionsProps} props - Component props
+ * @returns {JSX.Element} Writing score panel with suggestions
+ */
+export default function GrammarSuggestions({ 
+  originalText, 
+  correctedText, 
+  suggestions, 
+  onApplyCorrections 
+}: GrammarSuggestionsProps) {
   const getSeverityStyles = (severity: string) => {
     switch (severity) {
       case 'error':
@@ -79,116 +66,61 @@ export default function GrammarSuggestions({ originalText, correctedText, sugges
     }
   };
 
+  const handleApplyAll = () => {
+    if (onApplyCorrections && correctedText) {
+      onApplyCorrections(correctedText);
+    }
+  };
+
   return (
     <div className="card-professional p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="feature-icon w-10 h-10">
             <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-            Corrected Text
+            Suggestions for Improvement
           </h3>
         </div>
-        <div className="flex items-center gap-2">
-          {/* View mode toggle */}
-          {correctedText && correctedText !== originalText && (
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-              <button
-                onClick={() => setShowDiff(!showDiff)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  showDiff 
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                Show Diff
-              </button>
-              <button
-                onClick={() => setShowDiff(false)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  !showDiff 
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                Final Text
-              </button>
-            </div>
-          )}
-          
-          {/* View mode selector for diff */}
-          {showDiff && correctedText && correctedText !== originalText && (
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('inline')}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  viewMode === 'inline' 
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                Inline
-              </button>
-              <button
-                onClick={() => setViewMode('side-by-side')}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  viewMode === 'side-by-side' 
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                Side by Side
-              </button>
-            </div>
-          )}
-          
+        
+        {correctedText && correctedText !== originalText && onApplyCorrections && (
           <button
-            onClick={copyToClipboard}
-            className="btn-secondary flex items-center gap-2 !px-4 !py-2 text-sm"
+            onClick={handleApplyAll}
+            className="btn-primary flex items-center gap-2 text-sm"
           >
-            {copied ? (
-              <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Copied!
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Copy
-              </>
-            )}
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Apply All Corrections
           </button>
-        </div>
+        )}
       </div>
 
-      {/* Text display */}
-      {showDiff && correctedText && correctedText !== originalText ? (
-        <TextDiff 
-          original={originalText} 
-          corrected={correctedText} 
-          viewMode={viewMode} 
-        />
-      ) : (
-        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 mb-4 border border-slate-200 dark:border-slate-700">
-          <p className="whitespace-pre-wrap text-slate-700 dark:text-slate-300 leading-relaxed">
-            {displayText}
-          </p>
+      {/* Info message about inline corrections */}
+      {correctedText && correctedText !== originalText && (
+        <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="text-sm">
+              <p className="font-medium text-primary-900 dark:text-primary-100 mb-1">
+                Grammar corrections are now shown inline
+              </p>
+              <p className="text-primary-700 dark:text-primary-300">
+                Look for underlined text in the editor. Hover to see suggestions, then press space to apply.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Suggestions list */}
-      {suggestions.length > 0 && (
-        <div className="space-y-2 mt-4">
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
-            Suggestions for improvement:
-          </p>
+      {suggestions.length > 0 ? (
+        <div className="space-y-2">
           {suggestions.map((suggestion, index) => (
             <div
               key={index}
@@ -198,84 +130,37 @@ export default function GrammarSuggestions({ originalText, correctedText, sugges
               <div className="flex-1">
                 <p className="text-sm font-medium capitalize">{suggestion.type}</p>
                 <p className="text-sm mt-0.5 opacity-90">{suggestion.message}</p>
+                
+                {/* Show before/after snippet if available */}
+                {suggestion.before && suggestion.after && (
+                  <div className="mt-2 flex items-center gap-2 text-xs">
+                    <span className="px-2 py-1 bg-white/50 dark:bg-black/20 rounded line-through opacity-75">
+                      {suggestion.before}
+                    </span>
+                    <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    <span className="px-2 py-1 bg-white/50 dark:bg-black/20 rounded font-medium">
+                      {suggestion.after}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
-      )}
-
-      {/* Statistics */}
-      {correctedText && correctedText !== originalText && (
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      ) : (
+        <div className="text-center py-8">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-success-100 to-success-200 dark:from-success-900/30 dark:to-success-800/30 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-success-600 dark:text-success-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            <span>{Math.abs(correctedText.length - originalText.length)} characters changed</span>
           </div>
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-            <span>Grammar score improved</span>
-          </div>
+          <p className="text-slate-600 dark:text-slate-400">
+            Great job! No major issues found.
+          </p>
         </div>
       )}
-
-      {/* Action Buttons */}
-      <div className="mt-6 flex items-center gap-3">
-        <button
-          onClick={handleApply}
-          disabled={!onApplyCorrections || originalText === correctedText}
-          className={`btn-primary flex items-center gap-2 ${
-            (!onApplyCorrections || originalText === correctedText) ? 'btn-disabled' : ''
-          }`}
-        >
-          {isApplied ? (
-            <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Applied!
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Apply Corrections
-            </>
-          )}
-        </button>
-        
-        <button
-          onClick={copyToClipboard}
-          className="btn-secondary flex items-center gap-2"
-        >
-          {copied ? (
-            <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Copied!
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Copy Corrected Text
-            </>
-          )}
-        </button>
-
-        {/* Info about undo */}
-        {onApplyCorrections && (
-          <p className="text-sm text-slate-500 dark:text-slate-500 ml-auto">
-            Use Ctrl+Z to undo changes
-          </p>
-        )}
-      </div>
     </div>
   );
 } 

@@ -12,14 +12,19 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { TextHistory } from '@/utils/textHistory';
+import { GrammarSuggestions, updateGrammarSuggestions, type GrammarSuggestion } from '@/utils/grammarExtension';
+
+const DRAFT_STORAGE_KEY = 'email-radar-draft';
 
 interface EmailEditorProps {
   onAnalyze: (text: string) => void;
   isAnalyzing?: boolean;
+  grammarSuggestions?: GrammarSuggestion[];
 }
 
 export interface EmailEditorRef {
   updateText: (text: string) => void;
+  applyGrammarSuggestions: (suggestions: GrammarSuggestion[]) => void;
 }
 
 /**
@@ -28,7 +33,7 @@ export interface EmailEditorRef {
  * @returns {JSX.Element} Editor component with analyze button
  */
 const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
-  ({ onAnalyze, isAnalyzing = false }, ref) => {
+  ({ onAnalyze, isAnalyzing = false, grammarSuggestions = [] }, ref) => {
     const historyRef = useRef(new TextHistory());
     const [canUndo, setCanUndo] = useState(false);
     const [canRedo, setCanRedo] = useState(false);
@@ -45,6 +50,15 @@ const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
         CharacterCount.configure({
           limit: 10000,
         }),
+        GrammarSuggestions.configure({
+          suggestions: grammarSuggestions,
+          onApplySuggestion: (suggestion: GrammarSuggestion) => {
+            // Update history after applying suggestion
+            const text = editor?.getText() || '';
+            historyRef.current.push(text);
+            updateHistoryState();
+          },
+        }),
       ],
       content: '',
       editorProps: {
@@ -57,6 +71,8 @@ const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
         // Only add to history if text actually changed and after a small delay
         if (text !== lastTextRef.current) {
           lastTextRef.current = text;
+          // Save draft to localStorage
+          localStorage.setItem(DRAFT_STORAGE_KEY, text);
           setTimeout(() => {
             if (editor.getText() === text) {
               historyRef.current.push(text);
@@ -66,6 +82,13 @@ const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
         }
       },
     });
+
+    // Update grammar suggestions when they change
+    useEffect(() => {
+      if (editor && grammarSuggestions.length > 0) {
+        updateGrammarSuggestions(editor, grammarSuggestions);
+      }
+    }, [editor, grammarSuggestions]);
 
     const updateHistoryState = () => {
       setCanUndo(historyRef.current.canUndo());
@@ -100,6 +123,10 @@ const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
         lastTextRef.current = text;
         historyRef.current.push(text);
         updateHistoryState();
+      },
+      applyGrammarSuggestions: (suggestions: GrammarSuggestion[]) => {
+        if (!editor) return;
+        updateGrammarSuggestions(editor, suggestions);
       }
     }), [editor]);
 
@@ -143,8 +170,7 @@ const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
     return (
       <div className="flex flex-col gap-6">
         {/* Editor Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Your Text</h2>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-4">
             {/* Undo/Redo buttons */}
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
@@ -207,25 +233,16 @@ const EmailEditor = forwardRef<EmailEditorRef, EmailEditorProps>(
 
         {/* Editor Footer */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-              </svg>
-              <span>{wordCount} words</span>
+          <div className="flex items-center divide-x divide-slate-300 dark:divide-slate-600 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden">
+            <div className="px-4 py-2 text-slate-600 dark:text-slate-400">
+              <span className="font-medium">{wordCount}</span> Words
             </div>
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{characterCount} characters</span>
+            <div className="px-4 py-2 text-slate-600 dark:text-slate-400">
+              <span className="font-medium">{characterCount}</span> Characters
             </div>
             {wordCount > 0 && (
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{readingTime} min read</span>
+              <div className="px-4 py-2 text-slate-600 dark:text-slate-400">
+                <span className="font-medium">{readingTime}</span> min read
               </div>
             )}
           </div>

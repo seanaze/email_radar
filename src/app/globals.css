@@ -215,4 +215,94 @@
   .animate-pulse-soft {
     animation: pulse-soft 2s ease-in-out infinite;
   }
+}
+
+/* Inline Grammar Suggestions */
+.grammar-suggestion {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.grammar-suggestion-spelling {
+  text-decoration: underline wavy #ef4444;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.grammar-suggestion-grammar {
+  text-decoration: underline wavy #3b82f6;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.grammar-suggestion-style {
+  text-decoration: underline wavy #8b5cf6;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.grammar-suggestion:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 0.25rem;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+
+/* Grammar Tooltip */
+.grammar-tooltip {
+  position: fixed;
+  z-index: 9999;
+  animation: tooltip-appear 0.2s ease-out;
+}
+
+@keyframes tooltip-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grammar-tooltip-content {
+  @apply bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 p-4 max-w-sm;
+}
+
+.grammar-tooltip-message {
+  @apply text-sm text-slate-700 dark:text-slate-300 mb-2;
+}
+
+.grammar-tooltip-replacement {
+  @apply text-sm mb-2;
+}
+
+.grammar-tooltip-label {
+  @apply text-slate-500 dark:text-slate-400 mr-2;
+}
+
+.grammar-tooltip-replacement strong {
+  @apply text-primary-600 dark:text-primary-400 font-medium;
+}
+
+.grammar-tooltip-hint {
+  @apply text-xs text-slate-500 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-2 mt-2;
+}
+
+/* Animation Classes */
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 } 

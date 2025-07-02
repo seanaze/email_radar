@@ -21,6 +21,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    // Skip if supabase is not configured
+    if (!supabase) {
+      console.warn('Supabase client not initialized - auth features disabled');
+      return;
+    }
+
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {

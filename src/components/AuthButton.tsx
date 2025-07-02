@@ -7,9 +7,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import { useAppDispatch, useAppSelector } from '@/state/hooks';
 import { setUser, clearUser, selectIsAuthenticated, selectUser } from '@/features/auth/authSlice';
+import { useToast } from './ToastProvider';
 
 /**
  * @description Authentication button for Google OAuth via Supabase
@@ -18,6 +20,8 @@ import { setUser, clearUser, selectIsAuthenticated, selectUser } from '@/feature
 export default function AuthButton() {
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { showToast } = useToast();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectUser);
 
@@ -25,6 +29,11 @@ export default function AuthButton() {
    * @description Handle Google OAuth sign in
    */
   const handleGoogleSignIn = async () => {
+    if (!supabase) {
+      showToast('Authentication is not configured. Please set up Supabase.', 'error');
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -35,10 +44,11 @@ export default function AuthButton() {
       });
       if (error) {
         console.error('Error signing in with Google:', error);
-        // TODO: Show user-friendly error toast
+        showToast('Google sign-in failed. Please try again.', 'error');
       }
     } catch (err) {
       console.error('Unexpected error during sign in:', err);
+      showToast('An unexpected error occurred. Please try again.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -48,16 +58,26 @@ export default function AuthButton() {
    * @description Handle user sign out
    */
   const handleSignOut = async () => {
+    if (!supabase) {
+      dispatch(clearUser());
+      router.push('/');
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
+        showToast('Failed to sign out. Please try again.', 'error');
       } else {
         dispatch(clearUser());
+        router.push('/');
+        showToast('Successfully signed out', 'success');
       }
     } catch (err) {
       console.error('Unexpected error during sign out:', err);
+      showToast('An unexpected error occurred. Please try again.', 'error');
     } finally {
       setIsLoading(false);
     }
